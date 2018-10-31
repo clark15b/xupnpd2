@@ -1,0 +1,8 @@
+#EXTM3U
+#EXT-X-M3U: type=ts handler=hls name="OTT-HLS"
+
+#EXTINF:0, СТРК HD
+http://sochi-strk.ru:1936/strk/strk.stream/playlist.m3u8
+
+#EXTINF:0, 43 HD
+http://sochi-strk.ru:1936/strk/43Kanal.stream/playlist.m3u8

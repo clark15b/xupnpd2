@@ -1,0 +1,17 @@
+CFLAGS  = /nologo
+OBJS    = lapi.obj lcode.obj ldebug.obj ldo.obj ldump.obj lfunc.obj lgc.obj llex.obj lmem.obj lobject.obj \
+ lopcodes.obj lparser.obj lstate.obj lstring.obj ltable.obj ltm.obj lundump.obj lvm.obj lzio.obj lauxlib.obj \
+ lbaselib.obj ldblib.obj liolib.obj lmathlib.obj loslib.obj ltablib.obj lstrlib.obj loadlib.obj linit.obj
+LIBS    =
+
+all: $(OBJS)
+    lib /out:liblua.lib $(OBJS)
+
+clean:
+    del $(OBJS)
+
+.cpp.obj:
+    cl /c $(CFLAGS) /Fo$@ $<
+
+.c.obj:
+    cl /c $(CFLAGS) /Fo$@ $<

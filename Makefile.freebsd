@@ -1,0 +1,4 @@
+CFLAGS  = -fno-exceptions -fno-rtti -I. -Ilua-5.1.5 -Isqlite3 -O2
+LIBS    = -Wl,-E
+
+include build/rules.mk
