@@ -864,8 +864,13 @@ bool xupnpd::all_init(int argc,char** argv)
 
     cfg::uuid+=cfg::upnp_device_uuid;
 
+#ifdef _WIN32
+    if(cfg::startup_delay>0)
+        Sleep(1000*cfg::startup_delay);
+#else
     if(cfg::startup_delay>0)
         sleep(cfg::startup_delay);
+#endif
 
     if(!ssdp::init())
         return false;

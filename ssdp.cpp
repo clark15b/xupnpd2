@@ -374,7 +374,11 @@ bool ssdp::mk_outgoing_socket(void)
 
         int sndbuf=8192;
 
+#ifdef _WIN32
+        setsockopt(sock,SOL_SOCKET,SO_SNDBUF,(const char*)&sndbuf,sizeof(sndbuf));
+#else
         setsockopt(sock,SOL_SOCKET,SO_SNDBUF,&sndbuf,sizeof(sndbuf));
+#endif
 
         if(!setsockopt(sock,IPPROTO_IP,IP_MULTICAST_TTL,(const char*)&mcast_ttl,sizeof(mcast_ttl)) &&
 #ifndef _WIN32
