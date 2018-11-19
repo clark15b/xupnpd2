@@ -30,6 +30,8 @@ namespace hls
 {
     static const char http_tag[]="http://";
 
+    static const char https_tag[]="https://";
+
     unsigned long str2ulong(const std::string& s)
     {
         unsigned long n=0;
@@ -369,7 +371,6 @@ bool hls::stream::_open(const std::string& url,const std::string& range,const st
 
         std::string code;
 
-
         char temp[1024];
 
         while((gets(temp,sizeof(temp)))>0)
@@ -457,6 +458,9 @@ bool hls::stream::open(const std::string& url,const std::string& range,const std
     for(int i=0;i<3;i++)
     {
         std::string location;
+
+        if(!strncmp(current_url.c_str(),https_tag,sizeof(https_tag)-1))
+            current_url.replace(0,sizeof(https_tag)-1,http_tag);
 
         if(!_open(current_url,range,post_data,location))
             return false;

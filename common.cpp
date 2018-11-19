@@ -289,7 +289,7 @@ std::string utils::uuid_gen(void)
 
 const std::string& utils::vformat(std::string& dst,const char* fmt,va_list ap)
 {
-    char buf[512]; int n;
+    char buf[2048]; int n;
 
     n=vsnprintf(buf,sizeof(buf),fmt,ap);
 

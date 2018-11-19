@@ -213,7 +213,7 @@ int utils::scan_playlist(const std::string& path,int parentid,int& objid,std::st
 
         std::map<std::string,std::string> track_ext;
 
-        char buf[512];
+        char buf[1024];
 
         bool is_first=true;
 
