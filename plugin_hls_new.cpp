@@ -335,6 +335,9 @@ void hls_new::sendurl(const std::string& url)
 
             long bytes_left=(long)s.length();
 
+            if(bytes_left<1)
+                bytes_left=999999999;
+
             while(bytes_left>0)
             {
                 // read

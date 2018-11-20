@@ -553,7 +553,7 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
                         {
                             int n=strlen(buf);
 
-                            if(!strncmp(buf,http_tag,sizeof(http_tag)-1))
+                            if(!strncmp(buf,http_tag,sizeof(http_tag)-1) || !strncmp(buf,https_tag,sizeof(https_tag)-1))
                                 url.assign(buf,n);
                             else
                                 { url=base_url; url.append(buf,n); }
@@ -587,7 +587,7 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
     {
         stream s(user_agent);
 
-        if(strncmp(stream_url.c_str(),http_tag,sizeof(http_tag)-1))
+        if(strncmp(stream_url.c_str(),http_tag,sizeof(http_tag)-1) && strncmp(stream_url.c_str(),https_tag,sizeof(https_tag)-1))
             stream_url=base_url+stream_url;
 
         if(s.open(stream_url))
