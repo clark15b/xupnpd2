@@ -1,0 +1,9 @@
+*.a
+*.o
+media/*
+version.h
+xupnpd
+xupnpd.db
+xupnpd.uid
+
+
