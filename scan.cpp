@@ -189,6 +189,7 @@ int utils::scan_playlist(const std::string& path,int parentid,int& objid,std::st
     std::map<std::string,std::string> pls_ext;
 
     std::string::size_type n=path.find_last_of("\\/");
+    std::string::size_type n2=std::string::npos;
 
     if(n!=std::string::npos)
         playlist_name=path.substr(n+1);
@@ -332,8 +333,9 @@ int utils::scan_playlist(const std::string& path,int parentid,int& objid,std::st
                             filename=track_url.substr(n,n1-n);
 
                         n=filename.find_last_of('.');
+                        n2=filename.find_last_of(':');
 
-                        if(n!=std::string::npos)
+                        if(n!=std::string::npos && (n2==std::string::npos || n2<n))
                             track_type=filename.substr(n+1);
                     }
                 }
