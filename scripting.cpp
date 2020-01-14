@@ -13,6 +13,7 @@ extern "C"
 #include <lualib.h>
 }
 
+#include "luacompat.h"
 #include <list>
 #include <ctype.h>
 #include "db.h"
@@ -91,6 +92,7 @@ bool scripting::main(http::req& req,const std::string& filename)
     luaL_newmetatable(st,LUA_HTTP);
     lua_pushvalue(st,-1);
     lua_setfield(st,-2,"__index");
+
     luaL_register(st,0,__http);
 
     lua_setmetatable(st,-2);
@@ -208,7 +210,7 @@ int scripting::lua_httpreq_tostring(lua_State* L)
 
 int scripting::lua_httpreq_status(lua_State* L)
 {
-    *((httpreq*)luaL_checkudata(L,1,LUA_HTTP))->status=luaL_checkint(L,2);
+    *((httpreq*)luaL_checkudata(L,1,LUA_HTTP))->status=luaL_checkinteger(L,2);
 
     return 0;
 }
@@ -258,14 +260,14 @@ int scripting::lua_scan_for_media(lua_State* L)
 
 int scripting::lua_browse(lua_State* L)
 {
-    int _contid=luaL_checkint(L,1);
+    int _contid=luaL_checkinteger(L,1);
 
-    int page=luaL_checkint(L,2);
+    int page=luaL_checkinteger(L,2);
 
     int page_size=10;
 
     if(lua_gettop(L)>2)
-        page_size=luaL_checkint(L,3);
+        page_size=luaL_checkinteger(L,3);
 
     if(_contid<0)
         _contid=0;

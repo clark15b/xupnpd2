@@ -18,6 +18,8 @@ extern "C"
 #include <lualib.h>
 }
 
+#include "luacompat.h"
+
 namespace luas
 {
     void reglibs(lua_State* st);
