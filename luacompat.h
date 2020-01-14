@@ -20,7 +20,7 @@ inline void luaL_register(lua_State* L,const char* libname,const luaL_Reg* l)
     if(!libname)
         luaL_setfuncs(L,l,0);
     else
-        { lua_createtable(L,0,0); luaL_newlibtable(L,l); luaL_setfuncs(L,l,0); lua_setglobal(L,libname); }
+        { lua_createtable(L,0,0); luaL_setfuncs(L,l,0); lua_setglobal(L,libname); }
 }
 
 #endif
