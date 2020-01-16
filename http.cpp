@@ -759,8 +759,24 @@ void http::req::fix_dlna_org_op_for_live(std::string& s)
     }
 }
 
+void http::req::fix_url(void)
+{
+    if(!url.empty())
+    {
+        const char* s=url.c_str();
+
+        while(s[1]=='/')
+            s++;
+
+        if(s>url.c_str())
+            url=url.substr(s-url.c_str());
+    }
+}
+
 bool http::req::main(void)
 {
+    fix_url();
+
     if(url.empty() || url[0]!='/' || strstr(url.c_str(),".."))
         return headers(400,false);
 

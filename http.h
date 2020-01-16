@@ -83,6 +83,8 @@ namespace http
     {
     protected:
         void fix_dlna_org_op_for_live(std::string& s);
+
+        void fix_url(void);
     public:
         std::string client_ip;
         std::string method;

@@ -1,4 +1,100 @@
-CFLAGS  = -fno-exceptions -fno-rtti -I. -Isqlite3 -O2
-LIBS    = -Wl,-E
+# Created by: clark15b@gmail.com
+# $FreeBSD: head/net/xupnpd2
 
-include build/rules.mk
+PORTNAME		=		xupnpd2
+PORTVERSION 	=  	 	beta
+CATEGORIES		=		net
+MASTER_SITES	=		https://github.com/clark15b/xupnpd2/archive/
+DISTNAME		=		master
+PKGNAMESUFFIX	=		_20.016.0558
+CFLAGS  		= 		-fno-exceptions -fno-rtti -I. -Isqlite3 -O2
+LIBS    		= 		-Wl,-E
+NO_CHECKSUM		=		YES
+
+DESCR			=		${WRKSRC}/www/index.html
+
+WRKSRC			=		${WRKDIR}/${PORTNAME}-${DISTNAME}
+
+MAINTAINER		=		clark15b@gmail.com
+COMMENT			=	
+
+LICENSE			=		GPLv2
+
+PLIST_FILES		=		bin/${PORTNAME} \
+						lib/${PORTNAME}.a \
+						%%ETCDIR%%/${PORTNAME}.cfg \
+						%%DATADIR%%/example.m3u \
+						%%DATADIR%%/${PORTNAME}.lua \
+						%%WWWDIR%%/www/cds.xml \
+						%%WWWDIR%%/www/cms.xml \
+						%%WWWDIR%%/www/dev.xml \
+						%%WWWDIR%%/www/favicon.ico \
+						%%WWWDIR%%/www/icon-180x180.png \
+						%%WWWDIR%%/www/icon-48x48.png \
+						%%WWWDIR%%/www/index.html \
+						%%WWWDIR%%/www/msr.xml \
+						%%WWWDIR%%/www/scripts/browse.lua \
+						%%WWWDIR%%/www/scripts/example.lua \
+						%%WWWDIR%%/www/scripts/play.lua \
+						%%WWWDIR%%/www/scripts/scan.lua
+
+
+CPP 			= 		c++
+LUA    			= 		lua-5.3.5
+MAIN 			= 		main.o
+OBJS    		= 		common.o ssdp.o http.o soap.o soap_int.o db_sqlite.o scan.o mime.o charset.o scripting.o live.o md5.o luajson.o \
+		  				compat.o plugin_hls_common.o plugin_hls.o plugin_hls_new.o plugin_tsbuf.o plugin_lua.o plugin_udprtp.o plugin_tsfilter.o
+
+SLIBS   		= 		sqlite3/libsqlite3.a $(LUA)/liblua.a
+
+LIB_DEPENDS		=		libstdc++.so.6:${PORTSDIR}/lang/gcc
+
+
+.include <bsd.port.options.mk>
+
+
+
+
+do-patch:
+	@${REINPLACE_CMD} -e "s|http_www_root=www/|http_www_root=${WWWDIR}/www/|g" ${WRKSRC}/${PORTNAME:2=.cfg}; \
+	 ${REINPLACE_CMD} -e "s|media_root=media/|media_root=${DATADIR}|g" ${WRKSRC}/${PORTNAME:2=.cfg}; \
+	 ${REINPLACE_CMD} -e "s|${PORTNAME:2=.cfg}|${ETCDIR}/${PORTNAME}.cfg|g" ${WRKSRC}/common.cpp; \
+	 ${REINPLACE_CMD} -e "s|${PORTNAME:2=.uid}|${ETCDIR}/${PORTNAME:2=.uid}|g" ${WRKSRC}/common.cpp; 
+
+pre-build:
+	@${ECHO_CMD} "static const char xupnpd_version[]=\"2.0-`date +%y.%j.%H%M`-beta\";" > ${WRKSRC}/version.h
+	@${PRINTF}   "\033[0;92m]%s\033[0m\n" "xupnpd_version[]=\"2.0-`date +%y.%j.%H%M`-beta\";"
+do-build: ${NAME}-all
+	
+
+${NAME}-all: $(SLIBS) depend
+	cd ${WRKSRC} && ${AR} ${ARFLAGS} ${PORTNAME}.a $(OBJS)
+	cd ${WRKSRC} && $(CPP) $(CFLAGS) -I$(LUA) -o ${PORTNAME} ${MAIN} $(OBJS) $(SLIBS) $(LIBS)
+	cd ${WRKSRC} && $(STRIP_CMD) ${PORTNAME}
+
+sqlite3/libsqlite3.a:
+	cd ${WRKSRC} && $(CC) -O2 -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_LOAD_EXTENSION -c sqlite3/sqlite3.c
+	cd ${WRKSRC} && $(AR) -cr $@ sqlite3.o
+
+$(LUA)/liblua.a:
+	cd ${WRKSRC} && $(MAKE) -C $(LUA) a MYCFLAGS="-DLUA_USE_LINUX -O2"
+
+depend:
+.for i in ${MAIN} ${OBJS}
+	cd ${WRKSRC}; \
+	$(CC) -c $(CFLAGS) -I$(LUA) -o $i ${i:.o=.c} 2>/dev/null || \
+	$(CPP) -c $(CFLAGS) -I$(LUA) -o $i ${i:.o=.cpp}
+.endfor
+
+do-install:
+	${INSTALL} ${WRKSRC}/${PORTNAME} ${STAGEDIR}${PREFIX}/bin/${PORTNAME}
+	${INSTALL} -d ${STAGEDIR}${ETCDIR} ${STAGEDIR}${WWWDIR} ${STAGEDIR}${DATADIR}
+	(cd ${WRKSRC} && ${COPYTREE_SHARE} www ${STAGEDIR}${WWWDIR}/ )
+	${INSTALL_DATA} ${WRKSRC}/media/example.m3u ${STAGEDIR}${DATADIR}
+	${INSTALL_DATA} ${WRKSRC}/${PORTNAME:2=.lua} ${STAGEDIR}${DATADIR}/${PORTNAME}.lua
+	${INSTALL} ${WRKSRC}/${PORTNAME:2=.cfg} ${STAGEDIR}${ETCDIR}/${PORTNAME}.cfg
+	${INSTALL_LIB} ${WRKSRC}/${PORTNAME}.a ${STAGEDIR}${PREFIX}/lib/${PORTNAME}.a
+
+
+
+.include <bsd.port.mk>
