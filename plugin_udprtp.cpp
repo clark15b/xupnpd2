@@ -125,6 +125,8 @@ int udprtp::openurl(const std::string& url,int& proto,const std::string& ifaddr)
 
     bool multicast=false;
 
+    bool has_source=false;
+
     const char* p=url.c_str();
 
     if(!strncmp(p,"udp://",6))
@@ -136,8 +138,23 @@ int udprtp::openurl(const std::string& url,int& proto,const std::string& ifaddr)
 
     p+=6;
 
-    if(*p=='@')
-        { multicast=true; p++; }
+    const char* p1=strchr(p,'@');
+
+    in_addr_t source_addr;
+
+    if(p1!=NULL)
+    {
+        multicast=true;
+
+        if(p1>p+1)
+        {
+            has_source=true;
+
+            source_addr=inet_addr(std::string(p,p1-p).c_str());
+        }
+
+        p=++p1;
+    }
 
     const char* p2=strchr(p,':');
 
@@ -177,14 +194,27 @@ int udprtp::openurl(const std::string& url,int& proto,const std::string& ifaddr)
                 setsockopt(sock,IPPROTO_IP,IP_MULTICAST_LOOP,(const char*)&mcast_loop,sizeof(mcast_loop));
 #endif
 
-                ip_mreq mcast_group;
+                if(!has_source)
+                {
+                    ip_mreq mcast_group;
 
-                memset((char*)&mcast_group,0,sizeof(mcast_group));
-                mcast_group.imr_multiaddr.s_addr=addr;
-                mcast_group.imr_interface.s_addr=get_if_addr(ifaddr);
+                    memset((char*)&mcast_group,0,sizeof(mcast_group));
+                    mcast_group.imr_multiaddr.s_addr=addr;
+                    mcast_group.imr_interface.s_addr=get_if_addr(ifaddr);
 
-                if(setsockopt(sock,IPPROTO_IP,IP_ADD_MEMBERSHIP,(const char*)&mcast_group,sizeof(mcast_group)))
-                    is_ok=false;
+                    if(setsockopt(sock,IPPROTO_IP,IP_ADD_MEMBERSHIP,(const char*)&mcast_group,sizeof(mcast_group)))
+                        is_ok=false;
+                }else
+                {
+                    ip_mreq_source mcast_group;
+
+                    memset((char*)&mcast_group,0,sizeof(mcast_group));
+                    mcast_group.imr_multiaddr.s_addr=addr;
+                    mcast_group.imr_interface.s_addr=get_if_addr(ifaddr);
+                    mcast_group.imr_sourceaddr.s_addr=source_addr;
+                    if(setsockopt(sock,IPPROTO_IP,IP_ADD_SOURCE_MEMBERSHIP,(const char*)&mcast_group,sizeof(mcast_group)))
+                        is_ok=false;
+                }
             }
 
             if(is_ok)
