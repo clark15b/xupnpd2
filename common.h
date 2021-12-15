@@ -42,7 +42,6 @@ namespace cfg
     extern bool         ssdp_loop;
     extern int          ssdp_ttl;
     extern int          http_port;
-    extern int          http_live_port;
     extern int          http_rcv_timeout;
     extern int          http_snd_timeout;
     extern int          http_backlog;

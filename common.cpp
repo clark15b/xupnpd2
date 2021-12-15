@@ -63,7 +63,6 @@ namespace cfg
     bool ssdp_loop=false;
     int ssdp_ttl=1;
     int http_port=0;
-    int http_live_port=0;
     int http_rcv_timeout=0;
     int http_snd_timeout=0;
     int http_backlog=0;
@@ -121,7 +120,6 @@ namespace cfg
         { "ssdp_loop",                  tbol,   0,      0,      &ssdp_loop                      },
         { "ssdp_ttl",                   tint,   1,      32,     &ssdp_ttl                       },
         { "http_port",                  tint,   1,      65535,  &http_port                      },
-        { "http_live_port",             tint,   1,      65535,  &http_live_port                 },
         { "http_rcv_timeout",           tint,   0,      9999,   &http_rcv_timeout               },
         { "http_snd_timeout",           tint,   0,      9999,   &http_snd_timeout               },
         { "http_backlog",               tint,   1,      99,     &http_backlog                   },
