@@ -1,4 +1,4 @@
 CFLAGS  = -fno-exceptions -fno-rtti -I. -Isqlite3 -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64
-LIBS    = -lm -ldl -luuid -Wl,-E
+LIBS    = -lm -ldl -luuid -lssl -lcrypto -Wl,-E
 
 include build/rules.mk

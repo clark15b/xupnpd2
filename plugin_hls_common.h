@@ -17,6 +17,10 @@
 #include <winsock2.h>
 #endif /* _WIN32 */
 
+#ifndef NO_SSL
+#include "ssl.h"
+#endif
+
 namespace hls
 {
     struct chunk_info
@@ -94,6 +98,12 @@ namespace hls
     protected:
         socket_t fd;
 
+#ifndef NO_SSL
+        SSL_CTX* ssl_ctx;
+
+        SSL* ssl;
+#endif
+
         char buffer[512];
 
         int offset;
@@ -102,7 +112,11 @@ namespace hls
 
         unsigned long total_read;
     public:
-        vbuf(void):fd(-1),offset(0),size(0),total_read(0) {}
+        vbuf(void):fd(-1),offset(0),size(0),total_read(0)
+#ifndef NO_SSL
+        ,ssl_ctx(nullptr),ssl(nullptr)
+#endif
+        {}
 
         int gets(char* p,int len);
 
