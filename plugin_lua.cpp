@@ -238,7 +238,7 @@ void luas::sendurl(const std::string& url)
     }
 }
 
-std::string luas::translate_url(const std::string& url_translator,const std::string& url)
+std::string luas::translate_url(const std::string& url_translator,const std::string& url,const std::string& method)
 {
     std::string real_url;
 
@@ -256,7 +256,9 @@ std::string luas::translate_url(const std::string& url_translator,const std::str
             {
                 lua_pushlstring(st,url.c_str(),url.length());
 
-                if(!lua_pcall(st,1,1,0))
+                lua_pushlstring(st,method.c_str(),method.length());
+
+                if(!lua_pcall(st,2,1,0))
                 {
                     size_t n=0;
 

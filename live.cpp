@@ -390,7 +390,7 @@ bool live::sendurl(http::req* req,const std::string& url,const std::string& hand
 
     if(!url_translator.empty())
     {
-        real_url=luas::translate_url(url_translator,url);
+        real_url=luas::translate_url(url_translator,url,req->method);
 
         if(real_url.empty())
             return false;
@@ -405,6 +405,7 @@ bool live::sendurl(http::req* req,const std::string& url,const std::string& hand
 #endif /* _WIN32 */
 
     std::map<std::string,std::string> env;
+    env["METHOD"]=req->method;
     env["URL"]=real_url;
     env["CONTENT_TYPE"]=mime;
 
