@@ -577,6 +577,13 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
 
     std::string stream_url;
 
+#ifndef NO_SSL
+    static const char key_tag[] = "#EXT-X-KEY:";
+    std::string key_method;
+    std::string key_url;
+    std::string key_iv;
+#endif
+
     int num=0;
 
     while((!is_len || total_read<len) && gets(buf,sizeof(buf))!=-1)
@@ -616,7 +623,51 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
             }else if(!strncmp(buf,duration_tag,sizeof(duration_tag)-1))
             {
                 chunks.set_target_duration(str2usec(buf+sizeof(duration_tag)-1));
+#ifndef NO_SSL
+            }else if (!strncmp(buf, key_tag, sizeof(key_tag) - 1))
+            {
+                char* p = buf + sizeof(key_tag) - 1;
 
+                while (*p == ' ')
+                    p++;
+
+                std::string key_info(p);
+
+                size_t start_pos = 0;
+                size_t end_pos = 0;
+
+                while (end_pos < key_info.size())
+                {
+                    while (end_pos < key_info.size() && key_info[end_pos] != ',')
+                        end_pos++;
+
+                    std::string token = key_info.substr(start_pos, end_pos - start_pos);
+                    size_t equal_pos = token.find('=');
+
+                    if (equal_pos != std::string::npos) {
+                        std::string key = token.substr(0, equal_pos);
+                        std::string value = token.substr(equal_pos + 1);
+
+                        if (!value.empty() && (value.front() == '"' || value.front() == '\'') && value.front() == value.back()) {
+                            value = value.substr(1, value.size() - 2);
+                        }
+
+                        if (key == "METHOD") {
+                            key_method = value;
+                        } else if (key == "URI") {
+                            if (!strncmp(value.c_str(), http_tag, sizeof(http_tag) - 1) || !strncmp(value.c_str(), https_tag, sizeof(https_tag) - 1))
+                                key_url = value;
+                            else
+                                key_url = base_url + value;
+                        } else if (key == "IV") {
+                            key_iv = value;
+                        }
+                    }
+
+                    start_pos = end_pos + 1;
+                    end_pos = start_pos;
+                }
+#endif
             }else if(*buf!='#')
             {
                 if(st==1)
@@ -638,7 +689,7 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
                                 { url=base_url; url.append(buf,n); }
                         }
 
-                        chunks.push_back(cur_id,track_length,url);
+                        chunks.push_back(cur_id,track_length,url,key_method,key_url,key_iv);
                     }
 
                     track_length=0;
