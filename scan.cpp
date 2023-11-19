@@ -345,14 +345,22 @@ int utils::scan_playlist(const std::string& path,int parentid,int& objid,std::st
                     if(!strncmp(track_url.c_str(),"http://",7))
                     {
                         if(!strncmp(track_type.c_str(),"m3u",3))
+#ifndef NO_SSL
+                            track_handler="hlse";
+#else
                             track_handler="hls";
+#endif
                         else
                             track_handler="http";
                     }else if(!strncmp(track_url.c_str(),"udp://",6) || !strncmp(track_url.c_str(),"rtp://",6))
                         track_handler="udp";
                 }
 
+#ifndef NO_SSL
+                if(track_handler=="hlse" || track_handler=="udp")
+#else
                 if(track_handler=="hls" || track_handler=="udp")
+#endif
                     track_type=cfg::upnp_live_type;
                 else if(track_handler=="http" && track_type.empty())
                     track_type=cfg::upnp_http_type;
