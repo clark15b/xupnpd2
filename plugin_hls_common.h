@@ -17,6 +17,10 @@
 #include <winsock2.h>
 #endif /* _WIN32 */
 
+#ifndef NO_SSL
+#include "ssl.h"
+#endif
+
 namespace hls
 {
     struct chunk_info
@@ -27,6 +31,11 @@ namespace hls
 
         std::string url;
 
+#ifndef NO_SSL
+        std::string key_method;
+        std::string key_url;
+        std::string key_iv;
+#endif
         chunk_info():id(0),usec(0) {}
     };
 
@@ -43,13 +52,21 @@ namespace hls
     public:
         chunks_list(void):chunks_num(0),last_chunk_id(-1),target_duration(0) {}
 
+#ifndef NO_SSL
+        void push_back(long id,unsigned long usec,std::string& url, std::string& key_method, std::string& key_url, std::string& key_iv)
+#else
         void push_back(long id,unsigned long usec,std::string& url)
+#endif
         {
             chunks.push_back(chunk_info());
 
             chunk_info& c=chunks.back();
 
             c.id=id; c.usec=usec; c.url.swap(url);
+
+#ifndef NO_SSL
+            c.key_method.swap(key_method); c.key_url.swap(key_url); c.key_iv.swap(key_iv);
+#endif
 
             last_chunk_id=c.id;
 
@@ -61,6 +78,10 @@ namespace hls
             chunk_info& cc=chunks.front();
 
             c.id=cc.id; c.usec=cc.usec; c.url.swap(cc.url);
+
+#ifndef NO_SSL
+            c.key_method.swap(cc.key_method); c.key_url.swap(cc.key_url); c.key_iv.swap(cc.key_iv);
+#endif
 
             chunks.pop_front();
 
@@ -94,6 +115,12 @@ namespace hls
     protected:
         socket_t fd;
 
+#ifndef NO_SSL
+        SSL_CTX* ssl_ctx;
+
+        SSL* ssl;
+#endif
+
         char buffer[512];
 
         int offset;
@@ -102,7 +129,11 @@ namespace hls
 
         unsigned long total_read;
     public:
-        vbuf(void):fd(-1),offset(0),size(0),total_read(0) {}
+        vbuf(void):fd(-1),offset(0),size(0),total_read(0)
+#ifndef NO_SSL
+        ,ssl_ctx(nullptr),ssl(nullptr)
+#endif
+        {}
 
         int gets(char* p,int len);
 
@@ -174,6 +205,11 @@ namespace http
     void sendurl(const std::string& url);
 
     int fetch(const std::string& url,std::string& dst,const std::string& post_data=std::string());
+}
+
+namespace utils
+{
+    std::string extract_root_url(const std::string& url);
 }
 
 #endif

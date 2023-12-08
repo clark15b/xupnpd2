@@ -28,6 +28,7 @@
 
 #include "plugin_hls.h"
 #include "plugin_hls_new.h"
+#include "plugin_hls_decrypt.h"
 #include "plugin_tsbuf.h"
 #include "plugin_lua.h"
 #include "plugin_udprtp.h"
@@ -103,6 +104,10 @@ bool live::init(void)
 #ifndef _WIN32
     builtin["tsbuf"]=tsbuf::sendurl;
 #endif /* _WIN32 */
+
+#ifndef NO_SSL
+    builtin["hlse"] = hls_decrypt::sendurl;
+#endif
 
     return true;
 }

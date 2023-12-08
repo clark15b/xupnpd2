@@ -5,7 +5,7 @@ STRIP   = strip
 RM      = rm
 LUA     = lua-5.3.5
 OBJS    = main.o common.o ssdp.o http.o soap.o soap_int.o db_sqlite.o scan.o mime.o charset.o scripting.o live.o md5.o luajson.o \
- compat.o plugin_hls_common.o plugin_hls.o plugin_hls_new.o plugin_tsbuf.o plugin_lua.o plugin_udprtp.o plugin_tsfilter.o
+ compat.o ssl.o plugin_hls_common.o plugin_hls.o plugin_hls_new.o plugin_hls_decrypt.o plugin_tsbuf.o plugin_lua.o plugin_udprtp.o plugin_tsfilter.o
 SLIBS   = sqlite3/libsqlite3.a $(LUA)/liblua.a
 
 all: version $(SLIBS) $(OBJS)

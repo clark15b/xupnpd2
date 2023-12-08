@@ -20,6 +20,7 @@
 #include "plugin_udprtp.h"
 #include "plugin_lua.h"
 #include "plugin_tsfilter.h"
+#include "plugin_hls_decrypt.h"
 
 namespace xupnpd
 {
@@ -217,6 +218,8 @@ namespace xupnpd
             hls::sendurl3(url);
         else if(!strcmp(lpCmdLine,"hls4"))
             hls_new::sendurl(url);
+        else if(!strcmp(lpCmdLine,"hlse"))
+            hls_decrypt::sendurl(url);
         else if(!strcmp(lpCmdLine,"udp") || !strcmp(lpCmdLine,"rtp"))
             udprtp::sendurl(url);
         else if(!strcmp(lpCmdLine,"lua"))

@@ -50,6 +50,10 @@ namespace cfg
     extern int          http_max_post_size;
     extern std::string  http_www_root;
     extern std::string  http_templates;
+#ifndef NO_SSL
+    extern bool         openssl_verify;
+    extern std::string  openssl_ca_location;
+#endif
     extern int          live_rcv_timeout;
     extern int          live_snd_timeout;
     extern std::string  upnp_device_name;

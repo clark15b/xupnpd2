@@ -25,7 +25,6 @@
 #include <time.h>
 #endif /* _WIN32 */
 
-
 namespace hls
 {
     static const char http_tag[]="http://";
@@ -141,11 +140,21 @@ int hls::vbuf::gets(char* p,int len)
     {
         if(offset>=size)
         {
-#ifndef _WIN32
-            ssize_t n=::read(fd,buffer,sizeof(buffer));
-#else
-            ssize_t n=::recv(fd,buffer,sizeof(buffer),0);
+            ssize_t n;
+
+#ifndef NO_SSL
+            if (ssl != NULL) {
+                n = ssl::read_with_retry(ssl, buffer, sizeof(buffer));
+            }
+            else
 #endif
+            {
+#ifndef _WIN32
+                n=::read(fd,buffer,sizeof(buffer));
+#else
+                n=::recv(fd,buffer,sizeof(buffer),0);
+#endif
+            }
 
             if(n==(ssize_t)-1 || !n)
             {
@@ -200,11 +209,21 @@ int hls::vbuf::read(char* p,int len)
         return n;
     }
 
-#ifndef _WIN32
-    ssize_t n=::read(fd,p,len);
-#else
-    ssize_t n=::recv(fd,p,len,0);
+    ssize_t n;
+
+#ifndef NO_SSL
+    if (ssl != NULL) {
+        n = ssl::read_with_retry(ssl, p, len);
+    }
+    else
 #endif
+    {
+#ifndef _WIN32
+        n=::read(fd,p,len);
+#else
+        n=::recv(fd,p,len,0);
+#endif
+    }
 
     if(n>0)
         total_read+=n;
@@ -218,11 +237,21 @@ int hls::vbuf::write(const char* p,int len)
 
     while(l<len)
     {
-#ifndef _WIN32
-        ssize_t n=::write(fd,p+l,len-l);
-#else
-        ssize_t n=::send(fd,p+l,len-l,0);
+        ssize_t n;
+
+#ifndef NO_SSL
+        if (ssl != NULL) {
+            n = ssl::write_with_retry(ssl, p+l, len-l);
+        }
+        else
 #endif
+        {
+#ifndef _WIN32
+            n=::write(fd,p+l,len-l);
+#else
+            n=::send(fd,p+l,len-l,0);
+#endif
+        }
 
         if(n==(ssize_t)-1 || !n)
             return -1;
@@ -235,6 +264,14 @@ int hls::vbuf::write(const char* p,int len)
 
 void hls::vbuf::close(void)
 {
+#ifndef NO_SSL
+    if (ssl != nullptr)
+        ssl::shutdown(ssl);
+
+    if (ssl_ctx != nullptr)
+        ssl::shutdown_context(ssl_ctx);
+#endif
+
     if(fd!=-1)
         { ::closesocket(fd); fd=-1; }
 
@@ -265,6 +302,18 @@ bool hls::stream::connect(const std::string& host,int port)
             if(!::connect(fd,(sockaddr*)&sin,sizeof(sin)))
             {
                 int on=1; setsockopt(fd,IPPROTO_TCP,TCP_NODELAY,(const char*)&on,sizeof(on));
+
+#ifndef NO_SSL
+                if (ssl_ctx != nullptr) {
+                    if ((ssl = ssl::create(ssl_ctx, fd, host.c_str()))) {
+                        int on=1; setsockopt(fd,IPPROTO_TCP,TCP_NODELAY,(const char*)&on,sizeof(on));
+
+                        return true;
+                    } else {
+                        ssl::handle_error();
+                    }
+                }
+#endif
 
                 return true;
             }
@@ -314,10 +363,19 @@ bool hls::stream::_open(const std::string& url,const std::string& range,const st
 
     len=0;
 
+#ifndef NO_SSL
+    if(!strncmp(p,http_tag,sizeof(http_tag)-1))
+        p+=sizeof(http_tag)-1;
+    else if(!strncmp(p,https_tag,sizeof(https_tag)-1))
+        p+=sizeof(https_tag)-1;
+    else
+        return false;
+#else
     if(strncmp(p,http_tag,sizeof(http_tag)-1))
         return false;
 
     p+=sizeof(http_tag)-1;
+#endif
 
     if(!proxy_addr.empty())
         p=proxy_addr.c_str();
@@ -338,10 +396,29 @@ bool hls::stream::_open(const std::string& url,const std::string& range,const st
     if(n!=std::string::npos)
         { port=atoi(host.c_str()+n+1); host=host.substr(0,n); }
     else
+#ifndef NO_SSL
+    {
+        if(!strncmp(url.c_str(),https_tag,sizeof(https_tag)-1))
+            port=443;
+        else
+            port=80;
+    }
+#else
         port=80;
-
+#endif
     if(!proxy_addr.empty())
         resource=url;
+
+#ifndef NO_SSL
+    if(!strncmp(url.c_str(),https_tag,sizeof(https_tag)-1))
+    {
+        if (!(ssl_ctx = ssl::create_context()))
+            return false;
+
+        if (!ssl::set_verify(ssl_ctx, host))
+            return false;
+    }
+#endif
 
     if(connect(host,port))
     {
@@ -459,8 +536,10 @@ bool hls::stream::open(const std::string& url,const std::string& range,const std
     {
         std::string location;
 
+#ifdef NO_SSL
         if(!strncmp(current_url.c_str(),https_tag,sizeof(https_tag)-1))
             current_url.replace(0,sizeof(https_tag)-1,http_tag);
+#endif
 
         if(!_open(current_url,range,post_data,location))
             return false;
@@ -497,6 +576,13 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
     int stream_idx=0;
 
     std::string stream_url;
+
+#ifndef NO_SSL
+    static const char key_tag[] = "#EXT-X-KEY:";
+    std::string key_method;
+    std::string key_url;
+    std::string key_iv;
+#endif
 
     int num=0;
 
@@ -537,7 +623,51 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
             }else if(!strncmp(buf,duration_tag,sizeof(duration_tag)-1))
             {
                 chunks.set_target_duration(str2usec(buf+sizeof(duration_tag)-1));
+#ifndef NO_SSL
+            }else if (!strncmp(buf, key_tag, sizeof(key_tag) - 1))
+            {
+                char* p = buf + sizeof(key_tag) - 1;
 
+                while (*p == ' ')
+                    p++;
+
+                std::string key_info(p);
+
+                size_t start_pos = 0;
+                size_t end_pos = 0;
+
+                while (end_pos < key_info.size())
+                {
+                    while (end_pos < key_info.size() && key_info[end_pos] != ',')
+                        end_pos++;
+
+                    std::string token = key_info.substr(start_pos, end_pos - start_pos);
+                    size_t equal_pos = token.find('=');
+
+                    if (equal_pos != std::string::npos) {
+                        std::string key = token.substr(0, equal_pos);
+                        std::string value = token.substr(equal_pos + 1);
+
+                        if (!value.empty() && (value.front() == '"' || value.front() == '\'') && value.front() == value.back()) {
+                            value = value.substr(1, value.size() - 2);
+                        }
+
+                        if (key == "METHOD") {
+                            key_method = value;
+                        } else if (key == "URI") {
+                            if (!strncmp(value.c_str(), http_tag, sizeof(http_tag) - 1) || !strncmp(value.c_str(), https_tag, sizeof(https_tag) - 1))
+                                key_url = value;
+                            else
+                                key_url = base_url + value;
+                        } else if (key == "IV") {
+                            key_iv = value;
+                        }
+                    }
+
+                    start_pos = end_pos + 1;
+                    end_pos = start_pos;
+                }
+#endif
             }else if(*buf!='#')
             {
                 if(st==1)
@@ -559,7 +689,7 @@ int hls::stream::parse_stream_info(int stream_id,chunks_list& chunks)
                                 { url=base_url; url.append(buf,n); }
                         }
 
-                        chunks.push_back(cur_id,track_length,url);
+                        chunks.push_back(cur_id,track_length,url,key_method,key_url,key_iv);
                     }
 
                     track_length=0;
