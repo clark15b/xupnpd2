@@ -24,6 +24,8 @@ namespace hls
 
         std::string current_url;
 
+        std::string method;
+
     public:
         context(void);
 

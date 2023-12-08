@@ -894,8 +894,10 @@ bool xupnpd::all_init(int argc,char** argv)
     if(!live::init())
         return false;
 
+#ifndef NO_SSL
     if(!ssl::init())
         return false;
+#endif
 
     utils::trace(utils::log_info,"location: %s",cfg::www_location.c_str());
 
