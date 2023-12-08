@@ -42,6 +42,8 @@ namespace hls_new
 
         std::string current_url;
 
+        std::string method;
+
 #ifndef _WIN32
         FILE* fp;
 
@@ -106,6 +108,8 @@ bool hls_new::metastream::init(const std::string& url)
 
     const char* opts=getenv("OPTS");
 
+    method=getenv("METHOD");
+
     if(opts)
     {
         const char* p=strpbrk(opts,",;");
@@ -155,7 +159,7 @@ bool hls_new::metastream::update_stream_info(hls::chunks_list& chunks)
 
         if(!last_update_time || now-last_update_time>refresh_period)
         {
-            current_url=luas::translate_url(callback,url);
+            current_url=luas::translate_url(callback,url,method);
 
             last_update_time=now;
         }

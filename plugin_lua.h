@@ -13,7 +13,7 @@ namespace luas
 {
     void sendurl(const std::string& url);
 
-    std::string translate_url(const std::string& url_translator,const std::string& url);
+    std::string translate_url(const std::string& url_translator,const std::string& url,const std::string& method);
 }
 
 #endif

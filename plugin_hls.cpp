@@ -25,6 +25,8 @@ hls::context::context(void)
 
     const char* opts=getenv("OPTS");
 
+    method=getenv("METHOD");
+
     if(!opts)
         return;
 
@@ -47,7 +49,7 @@ bool hls::context::resolv_url(const std::string& url,std::string& real_url)
 
         if(!last_update_time || now-last_update_time>refresh_period)
         {
-            current_url=luas::translate_url(callback,url);
+            current_url=luas::translate_url(callback,url,method);
 
             last_update_time=now;
         }
