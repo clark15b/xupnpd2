@@ -342,7 +342,11 @@ int utils::scan_playlist(const std::string& path,int parentid,int& objid,std::st
 
                 if(track_handler.empty())
                 {
+#ifndef NO_SSL
+                    if(!strncmp(track_url.c_str(),"http://",7) || !strncmp(track_url.c_str(),"https://",8))
+#else
                     if(!strncmp(track_url.c_str(),"http://",7))
+#endif
                     {
                         if(!strncmp(track_type.c_str(),"m3u",3))
 #ifndef NO_SSL
